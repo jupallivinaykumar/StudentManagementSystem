@@ -1,0 +1,104 @@
+{% extends 'core/staff_dashboard.html' %}
+{% load form_tags %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{{ title }}</h2>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {# --- Section 1: Attendance Selection Form --- #}
+    <div class="card dashboard-card mb-4">
+        <div class="card-header-custom bg-primary">
+            <i data-feather="calendar" class="me-2"></i>
+            <h5>Select Class and Date</h5>
+        </div>
+        <div class="card-body">
+            <form method="GET" action="{% url 'add_attendance' %}" class="space-y-4">
+                {# Subject Selection #}
+                <div>
+                    <label for="{{ attendance_selection_form.subject_id.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+                    {{ attendance_selection_form.subject_id }}
+                    {% if attendance_selection_form.subject_id.errors %}<p class="mt-1 text-sm text-red-600">{{ attendance_selection_form.subject_id.errors.as_text }}</p>{% endif %}
+                </div>
+                {# Session Year Selection #}
+                <div>
+                    <label for="{{ attendance_selection_form.session_year_id.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Session Year</label>
+                    {{ attendance_selection_form.session_year_id }}
+                    {% if attendance_selection_form.session_year_id.errors %}<p class="mt-1 text-sm text-red-600">{{ attendance_selection_form.session_year_id.errors.as_text }}</p>{% endif %}
+                </div>
+                {# Attendance Date #}
+                <div>
+                    <label for="{{ attendance_selection_form.attendance_date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Attendance Date</label>
+                    {{ attendance_selection_form.attendance_date }}
+                    {% if attendance_selection_form.attendance_date.errors %}<p class="mt-1 text-sm text-red-600">{{ attendance_selection_form.attendance_date.errors.as_text }}</p>{% endif %}
+                </div>
+                <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Fetch Students
+                </button>
+            </form>
+        </div>
+    </div>
+
+    {# --- Section 2: Attendance Marking Form (shown after selection) --- #}
+    {% if marking_form and students_in_class %}
+    <div class="card dashboard-card">
+        <div class="card-header-custom bg-success">
+            <i data-feather="clipboard" class="me-2"></i>
+            <h5>Mark Attendance for {{ selected_subject.subject_name }} ({{ selected_session }}) on {{ selected_date }}</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{% url 'add_attendance' %}" class="space-y-4">
+                {% csrf_token %}
+                
+                {# Hidden fields to pass selected subject, session, and date to POST #}
+                <input type="hidden" name="subject_id_hidden" value="{{ selected_subject.id }}">
+                <input type="hidden" name="session_year_id_hidden" value="{{ selected_session.id }}">
+                <input type="hidden" name="attendance_date_hidden" value="{{ selected_date }}">
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student Name (Username)</th>
+                                <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Present</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for student in students_in_class %}
+                            {% with field_name="student_"|add:student.id|add:"_status" %}
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    {{ student.admin.first_name }} {{ student.admin.last_name }} ({{ student.admin.username }})
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-center text-sm">
+                                    <div class="flex items-center justify-center">
+                                        {{ marking_form|get_field_by_name:field_name }}
+                                        <label class="sr-only" for="id_{{ field_name }}">Mark {{ student.admin.first_name }} Present</label>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endwith %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% if marking_form.non_field_errors %}<div class="text-danger mt-3">{{ marking_form.non_field_errors }}</div>{% endif %}
+                <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-lg font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                    Save Attendance
+                </button>
+            </form>
+        </div>
+    </div>
+    {% elif selected_subject and students_in_class.count == 0 %}
+    <div class="alert alert-info mt-4">No students found for {{ selected_subject.course_id.course_name|default:"the selected course" }} in {{ selected_session }}. Please enroll students in this course for this session.</div>
+    {% endif %}
+
+</div>
+{% endblock %}

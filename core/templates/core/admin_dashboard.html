@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { padding-top: 56px; background-color: #f0f2f5; }
+        .navbar { box-shadow: 0 2px 4px rgba(0,0,0,.05); }
+        .sidebar {
+            position: fixed;
+            top: 56px;
+            bottom: 0;
+            left: 0;
+            z-index: 1000;
+            padding: 20px 0;
+            overflow-x: hidden;
+            overflow-y: auto;
+            border-right: 1px solid #eee;
+            background-color: #f8f9fa;
+        }
+        .sidebar .nav-link {
+            font-weight: 500;
+            color: #333;
+        }
+        .sidebar .nav-link.active {
+            color: #007bff;
+        }
+        .sidebar .nav-link:hover {
+            background-color: #e9ecef;
+        }
+        main {
+            margin-left: 220px;
+            padding-top: 20px;
+        }
+        /* Styles for dashboard cards */
+        .summary-card {
+            background-color: white;
+            border-radius: .75rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,.08);
+            padding: 20px;
+            margin-bottom: 25px;
+            text-align: center;
+            color: white;
+        }
+        .summary-card h2 {
+            font-size: 2.5rem;
+            margin-bottom: 5px;
+        }
+        .summary-card p {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+        }
+        .summary-card-green { background-color: #28a745; } /* Total Students */
+        .summary-card-red { background-color: #dc3545; }   /* Total Staffs */
+        .summary-card-yellow { background-color: #ffc107; color: #343a40;} /* Total Courses */
+        .summary-card-blue { background-color: #007bff; }  /* Total Subjects */
+
+        .chart-card {
+            background-color: white;
+            border-radius: .75rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,.08);
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        .chart-card-header {
+            font-size: 1.25rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        .chart-container {
+            position: relative;
+            height: 350px; /* Fixed height for consistency */
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'admin_dashboard' %}">Admin Panel</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Welcome, {{ user.first_name|default:user.username }}</a>
+                    </li>
+                    <li class="nav-item">
+                        <form action="{% url 'logout' %}" method="post" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="nav-link btn btn-link text-decoration-none text-light">Logout</button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" aria-current="page" href="{% url 'admin_dashboard' %}">
+                                <span data-feather="home"></span>
+                                Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="coursesSessionsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <span data-feather="file"></span>
+                                Courses & Sessions
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="coursesSessionsDropdown">
+                                <li><a class="dropdown-item" href="{% url 'manage_courses' %}">Manage Courses</a></li>
+                                <li><a class="dropdown-item" href="{% url 'add_course' %}">Add Course</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{% url 'manage_session_years' %}">Manage Session Years</a></li>
+                                <li><a class="dropdown-item" href="{% url 'add_session_year' %}">Add Session Year</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="staffDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <span data-feather="users"></span>
+                                Staff
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="staffDropdown">
+                                <li><a class="dropdown-item" href="{% url 'manage_staff' %}">Manage Staff</a></li>
+                                <li><a class="dropdown-item" href="{% url 'add_staff' %}">Add Staff</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="studentsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <span data-feather="user-check"></span>
+                                Students
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="studentsDropdown">
+                                <li><a class="dropdown-item" href="{% url 'manage_students' %}">Manage Students</a></li>
+                                <li><a class="dropdown-item" href="{% url 'add_student' %}">Add Student</a></li>
+                            </ul>
+                        </li>
+                        
+                        {# Subjects Dropdown #}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="subjectsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <span data-feather="book-open"></span>
+                                Subjects
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="subjectsDropdown">
+                                <li><a class="dropdown-item" href="{% url 'manage_subjects' %}">Manage Subjects</a></li>
+                                <li><a class="dropdown-item" href="{% url 'add_subject' %}">Add Subject</a></li>
+                            </ul>
+                        </li>
+
+
+                        {# Attendance Dropdown #}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="attendanceDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <span data-feather="check-square"></span>
+                                Attendance
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="attendanceDropdown">
+                                <li><a class="dropdown-item" href="{% url 'manage_attendance' %}">Manage Attendance</a></li>
+                                {# The other links are now removed from the Admin panel's dropdown #}
+                            </ul>
+                        </li>
+
+
+
+                        {# Results Dropdown #}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="resultsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <span data-feather="bar-chart-2"></span>
+                                Results
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="resultsDropdown">
+                                <li><a class="dropdown-item" href="{% url 'check_student_result' %}">Check Student Result</a></li>
+                            </ul>
+                        </li>
+
+                        {# Feedback Dropdown #}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="feedbackDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <span data-feather="message-square"></span>
+                                Feedback
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="feedbackDropdown">
+                                <li><a class="dropdown-item" href="{% url 'manage_feedback' %}">View/Reply Feedback</a></li>
+                            </ul>
+                        </li>
+
+                        {# Leave Applications Dropdown #}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="leaveApplicationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <span data-feather="calendar"></span>
+                                Leave Applications
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="leaveApplicationsDropdown">
+                                <li><a class="dropdown-item" href="{% url 'manage_leave' %}">Manage Leave</a></li>
+                            </ul>
+                        </li>
+
+                        
+                        {# End New Link #}
+                    </ul>
+                </div>
+            </nav>
+
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                {% block content %}
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Admin Dashboard</h1>
+                </div>
+
+                {# Summary Cards #}
+                <div class="row">
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="summary-card summary-card-green">
+                            <h2>{{ total_students }}</h2>
+                            <p>Total Students</p>
+                            <a href="{% url 'manage_students' %}" class="btn btn-sm btn-light mt-2">More info <i data-feather="arrow-right"></i></a>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="summary-card summary-card-red">
+                            <h2>{{ total_staffs }}</h2>
+                            <p>Total Staffs</p>
+                            <a href="{% url 'manage_staff' %}" class="btn btn-sm btn-light mt-2">More info <i data-feather="arrow-right"></i></a>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="summary-card summary-card-yellow">
+                            <h2>{{ total_courses }}</h2>
+                            <p>Total Courses</p>
+                            <a href="{% url 'manage_courses' %}" class="btn btn-sm btn-light mt-2">More info <i data-feather="arrow-right"></i></a>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="summary-card summary-card-blue">
+                            <h2>{{ total_subjects }}</h2>
+                            <p>Total Subjects</p>
+                            <a href="{% url 'manage_subjects' %}" class="btn btn-sm btn-light mt-2">More info <i data-feather="arrow-right"></i></a>
+                        </div>
+                    </div>
+                </div>
+
+                {# Charts Row 1 #}
+                <div class="row">
+                    <div class="col-lg-6 mb-4">
+                        <div class="chart-card">
+                            <div class="chart-card-header">Student and Staff Chart</div>
+                            <div class="chart-container">
+                                <canvas id="studentStaffChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 mb-4">
+                        <div class="chart-card">
+                            <div class="chart-card-header">Total Subjects in Each Course</div>
+                            <div class="chart-container">
+                                <canvas id="subjectsPerCourseChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {# Charts Row 2 #}
+                <div class="row">
+                    <div class="col-lg-6 mb-4">
+                        <div class="chart-card">
+                            <div class="chart-card-header">Total Students in Each Course</div>
+                            <div class="chart-container">
+                                <canvas id="studentsPerCourseChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 mb-4">
+                        <div class="chart-card">
+                            <div class="chart-card-header">Total Students in Each Subject</div>
+                            <div class="chart-container">
+                                <canvas id="studentsPerSubjectChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {% endblock %}
+            </main>
+        </div>
+    </div>
+
+    {# ---------------------------------------------------------------------- #}
+    {# ---- CRITICAL SECTION: DATA-DUMPING SCRIPT TAGS (PUT THESE HERE) ----- #}
+    {# These HTML <script> tags contain the JSON data from Django context.   #}
+    {# They are 'application/json' type, so browser won't execute them directly. #}
+    {# They are just HTML elements for carrying data. #}
+
+    <script id="student_count_chart_data" type="application/json">{{ student_count_chart|json_script }}</script>
+    <script id="staff_count_chart_data" type="application/json">{{ staff_count_chart|json_script }}</script>
+    <script id="admin_count_chart_data" type="application/json">{{ admin_count_chart|json_script }}</script>
+
+    <script id="course_names_students_data" type="application/json">{{ course_names_students|json_script }}</script>
+    <script id="students_in_courses_data" type="application/json">{{ students_in_courses|json_script }}</script>
+
+    <script id="course_names_subjects_data" type="application/json">{{ course_names_subjects|json_script }}</script>
+    <script id="subjects_in_courses_data" type="application/json">{{ subjects_in_courses|json_script }}</script>
+
+    <script id="subject_names_students_data" type="application/json">{{ subject_names_students|json_script }}</script>
+    <script id="students_in_subjects_data" type="application/json">{{ students_in_subjects|json_script }}</script>
+
+    {# ---------------------------------------------------------------------- #}
+    {# ---- END OF DATA-DUMPING SCRIPT TAGS -------------------------------- #}
+
+    {# ---------------------------------------------------------------------- #}
+    {# ---- START OF JS LIBRARY INCLUDES AND MAIN JAVASCRIPT LOGIC -------- #}
+    {# These are your standard JavaScript includes and your chart drawing script. #}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> {# Chart.js Library #}
+
+    <script>
+        feather.replace(); // Initialize Feather icons
+
+        // --- Retrieve Data from Hidden Script Tags ---
+        // Now, you parse the text content of the HTML script tags.
+        const studentCountChart = JSON.parse(document.getElementById('student_count_chart_data').textContent);
+        const staffCountChart = JSON.parse(document.getElementById('staff_count_chart_data').textContent);
+        const adminCountChart = JSON.parse(document.getElementById('admin_count_chart_data').textContent);
+
+        const courseNamesStudents = JSON.parse(document.getElementById('course_names_students_data').textContent);
+        const studentsInCourses = JSON.parse(document.getElementById('students_in_courses_data').textContent);
+
+        const courseNamesSubjects = JSON.parse(document.getElementById('course_names_subjects_data').textContent);
+        const subjectsInCourses = JSON.parse(document.getElementById('subjects_in_courses_data').textContent);
+
+        const subjectNamesStudents = JSON.parse(document.getElementById('subject_names_students_data').textContent);
+        const studentsInSubjects = JSON.parse(document.getElementById('students_in_subjects_data').textContent);
+
+
+        // Chart Colors (feel free to customize)
+        const primaryColors = [
+            'rgba(255, 99, 132, 0.7)',  // Red
+            'rgba(54, 162, 235, 0.7)', // Blue
+            'rgba(255, 206, 86, 0.7)', // Yellow
+            'rgba(75, 192, 192, 0.7)', // Green
+            'rgba(153, 102, 255, 0.7)',// Purple
+            'rgba(255, 159, 64, 0.7)', // Orange
+            'rgba(199, 199, 199, 0.7)' // Gray
+        ];
+        const borderColors = [
+            'rgba(255, 99, 132, 1)',
+            'rgba(54, 162, 235, 1)',
+            'rgba(255, 206, 86, 1)',
+            'rgba(75, 192, 192, 1)',
+            'rgba(153, 102, 255, 1)',
+            'rgba(255, 159, 64, 1)',
+            'rgba(199, 199, 199, 1)'
+        ];
+
+        // --- Chart 1: Student and Staff Chart ---
+        const studentStaffCtx = document.getElementById('studentStaffChart').getContext('2d');
+        new Chart(studentStaffCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Students', 'Staffs', 'Admins'],
+                datasets: [{
+                    data: [studentCountChart, staffCountChart, adminCountChart],
+                    backgroundColor: [
+                        'rgba(40, 167, 69, 0.8)', // Green for Students
+                        'rgba(220, 53, 69, 0.8)',  // Red for Staffs
+                        'rgba(0, 123, 255, 0.8)'   // Blue for Admins
+                    ],
+                    borderColor: 'white',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: false,
+                        text: 'Student vs Staff Ratio'
+                    }
+                }
+            }
+        });
+
+        // --- Chart 2: Subjects Per Course Chart ---
+        const subjectsPerCourseCtx = document.getElementById('subjectsPerCourseChart').getContext('2d');
+        new Chart(subjectsPerCourseCtx, {
+            type: 'doughnut',
+            data: {
+                labels: courseNamesSubjects,
+                datasets: [{
+                    data: subjectsInCourses,
+                    backgroundColor: primaryColors,
+                    borderColor: borderColors,
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: false,
+                        text: 'Subjects per Course'
+                    }
+                }
+            }
+        });
+
+        // --- Chart 3: Students Per Course Chart ---
+        const studentsPerCourseCtx = document.getElementById('studentsPerCourseChart').getContext('2d');
+        new Chart(studentsPerCourseCtx, {
+            type: 'doughnut',
+            data: {
+                labels: studentsPerCourseCtx,
+                datasets: [{
+                    data: studentsInCourses,
+                    backgroundColor: primaryColors,
+                    borderColor: borderColors,
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: false,
+                        text: 'Students per Course'
+                    }
+                }
+            }
+        });
+
+        // --- Chart 4: Students Per Subject Chart ---
+        const studentsPerSubjectCtx = document.getElementById('studentsPerSubjectChart').getContext('2d');
+        new Chart(studentsPerSubjectCtx, {
+            type: 'doughnut',
+            data: {
+                labels: subjectNamesStudents,
+                datasets: [{
+                    data: studentsInSubjects,
+                    backgroundColor: primaryColors,
+                    borderColor: borderColors,
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: false,
+                        text: 'Students per Subject'
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

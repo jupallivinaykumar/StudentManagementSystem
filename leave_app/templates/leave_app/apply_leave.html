@@ -1,0 +1,74 @@
+{% extends 'core/student_dashboard.html' %} {# Can also extend staff_dashboard.html if it's a staff user #}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{{ title }}</h2>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card dashboard-card">
+                <div class="card-header-custom bg-primary">
+                    <i data-feather="edit" class="me-2"></i>
+                    <h5>Submit New Leave Application</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="{{ form.leave_date.id_for_label }}" class="form-label">{{ form.leave_date.label }}</label>
+                            {{ form.leave_date }}
+                            {% if form.leave_date.errors %}<div class="text-danger">{{ form.leave_date.errors }}</div>{% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label for="{{ form.leave_message.id_for_label }}" class="form-label">{{ form.leave_message.label }}</label>
+                            {{ form.leave_message }}
+                            {% if form.leave_message.errors %}<div class="text-danger">{{ form.leave_message.errors }}</div>{% endif %}
+                        </div>
+                        <button type="submit" class="btn btn-success mt-3">Submit Application</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card dashboard-card">
+                <div class="card-header-custom card-header-green">
+                    <i data-feather="list" class="me-2"></i>
+                    <h5>My Leave History</h5>
+                </div>
+                <div class="card-body">
+                    {% if user_leaves %}
+                    <ul class="list-group list-group-flush">
+                        {% for leave in user_leaves %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ leave.leave_date|date:"F j, Y" }}</strong>: {{ leave.leave_message|truncatechars:50 }}
+                            </div>
+                            {% if leave.status == 0 %}
+                                <span class="badge bg-warning text-dark">Pending</span>
+                            {% elif leave.status == 1 %}
+                                <span class="badge bg-success">Approved</span>
+                            {% else %}
+                                <span class="badge bg-danger">Rejected</span>
+                            {% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-muted text-center">No leave applications submitted yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

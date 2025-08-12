@@ -1,0 +1,95 @@
+{% extends 'core/admin_dashboard.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{{ title }}</h2>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+    <a href="{% url 'add_student' %}" class="btn btn-primary mb-3">Add New Student</a>
+
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Profile Pic</th>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Name</th>
+                <th>Course</th>
+                <th>Session Year</th>
+                <th>Gender</th>
+                <th>Address</th>
+                <th>DOB</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for student in students %} {# Note: 'students' is the paginated object #}
+            <tr>
+                <td>{{ student.id }}</td>
+                <td>
+                    {% if student.admin.profile_pic %}
+                        <img src="{{ student.admin.profile_pic.url }}" alt="Profile" class="img-thumbnail" style="width: 50px; height: 50px; object-fit: cover;">
+                    {% else %}
+                        <img src="{{ '/static/default_profile.png' }}" alt="Default" class="img-thumbnail" style="width: 50px; height: 50px; object-fit: cover;">
+                    {% endif %}
+                </td>
+                <td>{{ student.admin.username }}</td>
+                <td>{{ student.admin.email }}</td>
+                <td>{{ student.admin.first_name }} {{ student.admin.last_name }}</td>
+                <td>{{ student.course_id.course_name|default:"N/A" }}</td>
+                <td>{{ student.session_year_id|default:"N/A" }}</td>
+                <td>{{ student.gender }}</td>
+                <td>{{ student.address }}</td>
+                <td>{{ student.date_of_birth|default:"N/A" }}</td>
+                <td>
+                    <a href="{% url 'edit_student' student.id %}" class="btn btn-sm btn-info">Edit</a>
+                    <form action="{% url 'delete_student' student.id %}" method="post" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete student {{ student.admin.username }}? This action is irreversible.');">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="11">No students available.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {# Pagination controls #}
+    {% if students.has_other_pages %}
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+            {% if students.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page={{ students.previous_page_number }}">Previous</a></li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">Previous</span></li>
+            {% endif %}
+
+            {% for i in students.paginator.page_range %}
+                {% if students.number == i %}
+                    <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                {% else %}
+                    <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
+                {% endif %}
+            {% endfor %}
+
+            {% if students.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ students.next_page_number }}">Next</a></li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">Next</span></li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+</div>
+{% endblock %}

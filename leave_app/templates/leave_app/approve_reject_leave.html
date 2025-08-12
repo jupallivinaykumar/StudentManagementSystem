@@ -1,0 +1,52 @@
+{% extends 'core/admin_dashboard.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{{ title }}</h2>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="card dashboard-card">
+        <div class="card-header-custom bg-warning text-dark">
+            <i data-feather="check-circle" class="me-2"></i>
+            <h5>Review Leave Application</h5>
+        </div>
+        <div class="card-body">
+            <p><strong>Applicant:</strong> {{ leave_request.user_id.first_name }} {{ leave_request.user_id.last_name }} ({{ leave_request.user_id.username }})</p>
+            <p><strong>User Type:</strong> {{ leave_request.user_id.user_type|capfirst }}</p>
+            <p><strong>Leave Date:</strong> {{ leave_request.leave_date|date:"F j, Y" }}</p>
+            <p><strong>Reason:</strong> {{ leave_request.leave_message }}</p>
+            <p><strong>Applied On:</strong> {{ leave_request.created_at|date:"Y-m-d H:i" }}</p>
+            <p><strong>Current Status:</strong> 
+                {% if leave_request.status == 0 %}
+                    <span class="badge bg-warning text-dark">Pending</span>
+                {% elif leave_request.status == 1 %}
+                    <span class="badge bg-success">Approved</span>
+                {% else %}
+                    <span class="badge bg-danger">Rejected</span>
+                {% endif %}
+            </p>
+
+            <hr>
+
+            <h5>Update Status</h5>
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="{{ form.status.id_for_label }}" class="form-label">{{ form.status.label }}</label>
+                    {{ form.status }}
+                    {% if form.status.errors %}<div class="text-danger">{{ form.status.errors }}</div>{% endif %}
+                </div>
+                <button type="submit" class="btn btn-primary mt-3">Update Status</button>
+                <a href="{% url 'manage_leave' %}" class="btn btn-secondary mt-3">Back to Manage Leave</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

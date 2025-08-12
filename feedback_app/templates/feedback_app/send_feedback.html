@@ -1,0 +1,72 @@
+{% extends 'core/student_dashboard.html' %} {# Can also extend staff_dashboard.html #}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{{ title }}</h2>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card dashboard-card">
+                <div class="card-header-custom bg-primary">
+                    <i data-feather="send" class="me-2"></i>
+                    <h5>Submit New Feedback</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="{{ form.subject.id_for_label }}" class="form-label">{{ form.subject.label }}</label>
+                            {{ form.subject }}
+                            {% if form.subject.errors %}<div class="text-danger">{{ form.subject.errors }}</div>{% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label for="{{ form.feedback_message.id_for_label }}" class="form-label">{{ form.feedback_message.label }}</label>
+                            {{ form.feedback_message }}
+                            {% if form.feedback_message.errors %}<div class="text-danger">{{ form.feedback_message.errors }}</div>{% endif %}
+                        </div>
+                        <button type="submit" class="btn btn-success mt-3">Send Feedback</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card dashboard-card">
+                <div class="card-header-custom card-header-green">
+                    <i data-feather="message-square" class="me-2"></i>
+                    <h5>My Feedback History</h5>
+                </div>
+                <div class="card-body">
+                    {% if user_feedback_history %}
+                    <ul class="list-group list-group-flush">
+                        {% for feedback in user_feedback_history %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ feedback.subject|default:"No Subject" }}</strong> - {{ feedback.feedback_message|truncatechars:50 }}
+                                <br><small class="text-muted">{{ feedback.created_at|date:"F j, Y" }}</small>
+                            </div>
+                            {% if feedback.status %}
+                                <span class="badge bg-success">Replied</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark">Pending</span>
+                            {% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-muted text-center">No feedback submitted yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

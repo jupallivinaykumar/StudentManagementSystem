@@ -1,0 +1,55 @@
+{% extends 'core/admin_dashboard.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{{ title }}</h2>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="card dashboard-card">
+        <div class="card-header-custom bg-warning text-dark">
+            <i data-feather="message-circle" class="me-2"></i>
+            <h5>Reply to Feedback from {{ feedback_item.user_id.username }}</h5>
+        </div>
+        <div class="card-body">
+            <p><strong>Subject:</strong> {{ feedback_item.subject|default:"N/A" }}</p>
+            <p><strong>Message:</strong> {{ feedback_item.feedback_message }}</p>
+            <p><strong>Received On:</strong> {{ feedback_item.created_at|date:"Y-m-d H:i" }}</p>
+            <p><strong>Current Status:</strong> 
+                {% if feedback_item.status %}
+                    <span class="badge bg-success">Replied</span>
+                {% else %}
+                    <span class="badge bg-warning text-dark">Pending</span>
+                {% endif %}
+            </p>
+
+            <hr>
+
+            <h5>Your Reply</h5>
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="{{ form.reply_message.id_for_label }}" class="form-label">{{ form.reply_message.label }}</label>
+                    {{ form.reply_message }}
+                    {% if form.reply_message.errors %}<div class="text-danger">{{ form.reply_message.errors }}</div>{% endif %}
+                </div>
+                <div class="form-check mb-3">
+                    {{ form.status }}
+                    <label class="form-check-label" for="{{ form.status.id_for_label }}">
+                        {{ form.status.label }}
+                    </label>
+                    {% if form.status.errors %}<div class="text-danger">{{ form.status.errors }}</div>{% endif %}
+                </div>
+                <button type="submit" class="btn btn-primary mt-3">Send Reply & Update Status</button>
+                <a href="{% url 'manage_feedback' %}" class="btn btn-secondary mt-3">Back to View Feedback</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

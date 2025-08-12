@@ -1,0 +1,84 @@
+{# results/templates/results/view_student_result.html #}
+{% extends 'core/admin_dashboard.html' %}
+{% load form_tags %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{{ title }}</h2>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="card dashboard-card mb-4">
+        <div class="card-header-custom bg-primary">
+            <i data-feather="search" class="me-2"></i>
+            <h5>Filter Results</h5>
+        </div>
+        <div class="card-body">
+            <form method="GET" action="{% url 'check_student_result' %}" class="space-y-4">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-4">
+                        <label for="{{ form.course_id.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Course</label>
+                        {{ form.course_id }}
+                    </div>
+                    <div class="col-md-4">
+                        <label for="{{ form.session_year_id.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Session Year</label>
+                        {{ form.session_year_id }}
+                    </div>
+                    <div class="col-md-4">
+                        <label for="{{ form.student_id.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Student</label>
+                        {{ form.student_id }}
+                    </div>
+                </div>
+                <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Show Results
+                </button>
+            </form>
+        </div>
+    </div>
+
+    {% if results %}
+    <div class="card dashboard-card">
+        <div class="card-header-custom bg-success">
+            <i data-feather="bar-chart-2" class="me-2"></i>
+            <h5>Results for {{ student_profile.admin.get_full_name }}</h5>
+        </div>
+        <div class="card-body">
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>Subject</th>
+                        <th>Course</th>
+                        <th>Subject Marks</th>
+                        <th>Exam Marks</th>
+                        <th>Final Grade</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for result in results %}
+                    <tr>
+                        <td>{{ result.subject_id.subject_name }}</td>
+                        <td>{{ result.subject_id.course_id.course_name }}</td>
+                        <td>{{ result.subject_marks }}</td>
+                        <td>{{ result.exam_marks }}</td>
+                        <td>{{ result.final_grade|default:"N/A" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% elif request.GET %} {# Only show if a search was performed and returned no results #}
+    <div class="alert alert-info mt-4">
+        <p class="mb-0">No results found for the selected criteria.</p>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

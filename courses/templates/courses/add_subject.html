@@ -1,0 +1,54 @@
+{% extends 'core/admin_dashboard.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Add New Subject</h2>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="card dashboard-card">
+        <div class="card-header-custom bg-primary">
+            <i data-feather="plus-square" class="me-2"></i>
+            <h5>Subject Details</h5>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="space-y-4">
+                    {# Subject Name #}
+                    <div>
+                        <label for="{{ form.subject_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Subject Name</label>
+                        {{ form.subject_name }}
+                        {% if form.subject_name.errors %}<div class="text-danger mt-1">{{ form.subject_name.errors.as_text }}</div>{% endif %}
+                    </div>
+                    {# Course Dropdown #}
+                    <div>
+                        <label for="{{ form.course_id.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Course</label>
+                        {{ form.course_id }}
+                        {% if form.course_id.errors %}<div class="text-danger mt-1">{{ form.course_id.errors.as_text }}</div>{% endif %}
+                    </div>
+                    {# Staff Dropdown #}
+                    <div>
+                        <label for="{{ form.staff_id.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Staff</label>
+                        {{ form.staff_id }}
+                        {% if form.staff_id.errors %}<div class="text-danger mt-1">{{ form.staff_id.errors.as_text }}</div>{% endif %}
+                    </div>
+                </div>
+
+                <div class="mt-6">
+                    <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-lg font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                        Add Subject
+                    </button>
+                    <a href="{% url 'manage_subjects' %}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

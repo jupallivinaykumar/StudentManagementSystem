@@ -1,0 +1,36 @@
+{# core/templates/core/confirm_approve_user.html #}
+{% extends 'core/admin_dashboard.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{{ title }}</h2>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="card dashboard-card">
+        <div class="card-header-custom bg-warning text-dark">
+            <i data-feather="alert-triangle" class="me-2"></i>
+            <h5>Confirm User Approval</h5>
+        </div>
+        <div class="card-body">
+            <p>Are you sure you want to **approve and activate** the account for user:</p>
+            <p class="lead"><strong>Username:</strong> {{ user_to_approve.username }}</p>
+            <p class="lead"><strong>Name:</strong> {{ user_to_approve.first_name }} {{ user_to_approve.last_name }}</p>
+            <p class="lead"><strong>User Type:</strong> {{ user_to_approve.user_type|capfirst }}</p>
+            <p class="lead"><strong>Email:</strong> {{ user_to_approve.email }}</p>
+
+            <form action="{% url 'approve_user' user_to_approve.id %}" method="post" class="mt-4">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-success me-2">Yes, Approve and Activate</button>
+                <a href="{% url 'manage_pending_users' %}" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
